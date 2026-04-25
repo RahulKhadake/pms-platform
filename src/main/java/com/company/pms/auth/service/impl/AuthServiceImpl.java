@@ -4,6 +4,7 @@ import com.company.pms.auth.dto.*;
 import com.company.pms.auth.entity.AuthUser;
 import com.company.pms.auth.repository.AuthRepository;
 import com.company.pms.auth.service.AuthService;
+import com.company.pms.common.util.JwtUtil;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -16,10 +17,12 @@ public class AuthServiceImpl implements AuthService, UserDetailsService {
 
     private final AuthRepository repository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
-    public AuthServiceImpl(AuthRepository repository, PasswordEncoder passwordEncoder) {
+    public AuthServiceImpl(AuthRepository repository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
     }
 
     // ---------------- REGISTER ----------------
@@ -62,7 +65,14 @@ public class AuthServiceImpl implements AuthService, UserDetailsService {
             return new AuthResponseDTO("Incorrect password. Please try again.", false);
         }
 
-        return new AuthResponseDTO("Login successful", true);
+        // 🔥 Generate JWT token
+        String token = jwtUtil.generateToken(user.getEmail());
+
+        AuthResponseDTO res = new AuthResponseDTO();
+        res.setMessage("Login successful");
+        res.setSuccess(true);
+        res.setToken(token);
+        return res;
     }
 
     // ---------------- SPRING SECURITY ----------------
