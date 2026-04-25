@@ -5,6 +5,8 @@ import com.company.pms.auth.entity.AuthUser;
 import com.company.pms.auth.repository.AuthRepository;
 import com.company.pms.auth.service.AuthService;
 import com.company.pms.common.util.JwtUtil;
+import org.springframework.lang.NonNull;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -40,6 +42,7 @@ public class AuthServiceImpl implements AuthService, UserDetailsService {
         user.setEmail(dto.getEmail());
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
 
+        user.setRole("USER");
         repository.save(user);
 
         return new AuthResponseDTO("User Registered Successfully", true);
@@ -77,7 +80,7 @@ public class AuthServiceImpl implements AuthService, UserDetailsService {
 
     // ---------------- SPRING SECURITY ----------------
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(@NonNull String email) throws UsernameNotFoundException {
 
         AuthUser user = repository.findByEmail(email)
                 .orElseThrow(() ->
@@ -87,7 +90,6 @@ public class AuthServiceImpl implements AuthService, UserDetailsService {
         return new User(
                 user.getEmail(),
                 user.getPassword(),
-                java.util.Collections.emptyList()
-        );
+                java.util.Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole())));
     }
 }
