@@ -32,6 +32,9 @@ public class JwtFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
+        // ✅ ADD HERE
+        System.out.println("JWT FILTER HIT");
+        System.out.println("Header: " + request.getHeader("Authorization"));
         String authHeader = request.getHeader("Authorization");
 
         String token = null;
@@ -40,8 +43,10 @@ public class JwtFilter extends OncePerRequestFilter {
         // Extract Bearer token
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
+            System.out.println("Token: " + token);
             try {
                 email = jwtUtil.extractEmail(token);
+                System.out.println("Email: " + email);
             } catch (Exception e) {
                 // Invalid token — continue without authentication
             }
