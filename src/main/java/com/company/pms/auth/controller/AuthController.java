@@ -1,8 +1,12 @@
 package com.company.pms.auth.controller;
 
-import com.company.pms.auth.dto.*;
+import com.company.pms.auth.dto.LoginRequestDTO;
+import com.company.pms.auth.dto.LoginResponseDTO;
+import com.company.pms.auth.dto.RegisterRequestDTO;
 import com.company.pms.auth.service.AuthService;
+import com.company.pms.common.response.ApiResponse;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,19 +20,20 @@ public class AuthController {
         this.authService = authService;
     }
 
+    // ✅ 201 CREATED
     @PostMapping("/register")
-    public ResponseEntity<AuthResponseDTO> register(@Valid @RequestBody RegisterRequestDTO dto) {
-        AuthResponseDTO response = authService.register(dto);
-        return response.isSuccess()
-                ? ResponseEntity.ok(response)
-                : ResponseEntity.badRequest().body(response);
+    public ResponseEntity<ApiResponse<?>> register(@Valid @RequestBody RegisterRequestDTO dto) {
+        authService.register(dto);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.success("User registered successfully"));
     }
 
+    // ✅ 200 OK with token data
     @PostMapping("/login")
-    public ResponseEntity<AuthResponseDTO> login(@Valid @RequestBody LoginRequestDTO dto) {
-        AuthResponseDTO response = authService.login(dto);
-        return response.isSuccess()
-                ? ResponseEntity.ok(response)
-                : ResponseEntity.status(401).body(response);
+    public ResponseEntity<ApiResponse<LoginResponseDTO>> login(@Valid @RequestBody LoginRequestDTO dto) {
+        LoginResponseDTO data = authService.login(dto);
+        return ResponseEntity
+                .ok(ApiResponse.success("Login successful", data));
     }
 }

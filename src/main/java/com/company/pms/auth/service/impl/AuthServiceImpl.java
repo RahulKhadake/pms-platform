@@ -1,6 +1,8 @@
 package com.company.pms.auth.service.impl;
 
-import com.company.pms.auth.dto.*;
+import com.company.pms.auth.dto.LoginRequestDTO;
+import com.company.pms.auth.dto.LoginResponseDTO;
+import com.company.pms.auth.dto.RegisterRequestDTO;
 import com.company.pms.auth.entity.AuthUser;
 import com.company.pms.auth.repository.AuthRepository;
 import com.company.pms.auth.service.AuthService;
@@ -29,53 +31,34 @@ public class AuthServiceImpl implements AuthService, UserDetailsService {
 
     // ---------------- REGISTER ----------------
     @Override
-    public AuthResponseDTO register(RegisterRequestDTO dto) {
+    public void register(RegisterRequestDTO dto) {
 
-        // check email exists
         if (repository.findByEmail(dto.getEmail()).isPresent()) {
-            return new AuthResponseDTO("This email is already registered. Please login instead.", false);
+            throw new IllegalArgumentException("This email is already registered. Please login instead.");
         }
 
-        // map DTO → Entity
         AuthUser user = new AuthUser();
         user.setName(dto.getName());
         user.setEmail(dto.getEmail());
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
-
         user.setRole("USER");
-        repository.save(user);
 
-        return new AuthResponseDTO("User Registered Successfully", true);
+        repository.save(user);
     }
 
     // ---------------- LOGIN ----------------
     @Override
-    public AuthResponseDTO login(LoginRequestDTO dto) {
+    public LoginResponseDTO login(LoginRequestDTO dto) {
 
         AuthUser user = repository.findByEmail(dto.getEmail())
-                .orElse(null);
+                .orElseThrow(() -> new IllegalArgumentException("This email is not registered. Please sign up first."));
 
-        if (user == null) {
-            return new AuthResponseDTO("This email is not registered. Please sign up first.", false);
+        if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("Incorrect password. Please try again.");
         }
 
-        boolean isMatch = passwordEncoder.matches(
-                dto.getPassword(),
-                user.getPassword()
-        );
-
-        if (!isMatch) {
-            return new AuthResponseDTO("Incorrect password. Please try again.", false);
-        }
-
-        // 🔥 Generate JWT token
         String token = jwtUtil.generateToken(user.getEmail());
-
-        AuthResponseDTO res = new AuthResponseDTO();
-        res.setMessage("Login successful");
-        res.setSuccess(true);
-        res.setToken(token);
-        return res;
+        return new LoginResponseDTO(token, user.getEmail(), user.getRole());
     }
 
     // ---------------- SPRING SECURITY ----------------
@@ -83,13 +66,12 @@ public class AuthServiceImpl implements AuthService, UserDetailsService {
     public UserDetails loadUserByUsername(@NonNull String email) throws UsernameNotFoundException {
 
         AuthUser user = repository.findByEmail(email)
-                .orElseThrow(() ->
-                        new UsernameNotFoundException("User not found with email: " + email)
-                );
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
         return new User(
                 user.getEmail(),
                 user.getPassword(),
-                java.util.Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole())));
+                java.util.Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole()))
+        );
     }
 }
