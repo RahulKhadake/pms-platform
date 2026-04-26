@@ -16,6 +16,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.company.pms.common.enums.Role;
+
 @Service
 public class AuthServiceImpl implements AuthService, UserDetailsService {
 
@@ -41,7 +43,7 @@ public class AuthServiceImpl implements AuthService, UserDetailsService {
         user.setName(dto.getName());
         user.setEmail(dto.getEmail());
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
-        user.setRole("USER");
+        user.setRole(Role.USER);
 
         repository.save(user);
     }
@@ -58,7 +60,7 @@ public class AuthServiceImpl implements AuthService, UserDetailsService {
         }
 
         String token = jwtUtil.generateToken(user.getEmail());
-        return new LoginResponseDTO(token, user.getEmail(), user.getRole());
+        return new LoginResponseDTO(token, user.getEmail(), user.getRole().name());
     }
 
     // ---------------- SPRING SECURITY ----------------

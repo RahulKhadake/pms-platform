@@ -1,5 +1,6 @@
 package com.company.pms.auth.entity;
 
+import com.company.pms.common.enums.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -26,6 +27,7 @@ public class AuthUser {
     private String password;
 
 
-    private String  role;
-
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role = Role.USER;
 }
